@@ -116,4 +116,4 @@ const resolvers = {
 const server = new ApolloServer({ typeDefs: schema, resolvers })
 
 // launch the server when the Lambda is called
-exports.handler = server.createHandler();
+exports.graphqlHandler = server.createHandler();
