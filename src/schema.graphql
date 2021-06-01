@@ -1,0 +1,73 @@
+type User @model
+  @key(fields: ["userName"])
+  @key(name: "byEmail", fields: ["email"], queryField: "byEmail")
+  @key(name: "byName", fields: ["name"], queryField: "byName")
+{
+  userName: String!
+  name: String!
+  email:  AWSEmail!
+  phoneNumber: AWSPhone
+}
+
+
+
+type Address 
+  @model{
+    id: ID!
+    addrLine1: String!
+    addrLine2: String
+    addrLine3: String!
+    city: String!
+    state: String
+    country: String!
+    postCode: String
+    latitude: Float
+    longitude: Float
+}
+
+enum MerchantAccountStatus{
+  NEW
+  APPROVED
+  ACTIVE
+  DISABLED
+  ONHOLD
+}
+
+type MerchantAccount 
+  @model{
+    id: ID!
+    companyName: String!
+    contactName: String!
+    contactPhoneNumber: AWSPhone!
+    contactEmail:  AWSEmail!
+    billingAddress: Address!
+    accountSatus: MerchantAccountStatus!
+    accountStatusReason: String
+    approvedAt: AWSDateTime
+    approvedBy: String
+    Stores: [Store] @connection(keyName: "byMerchantAccount", fields:["id"])
+}
+
+enum StoreStatus{
+  NEW
+  ACTIVE
+  DISABLED
+  ONHOLD
+}
+
+type Store
+  @key(name: "byMerchantAccount", fields: ["merchantAccountId"])
+  @model {
+    id: ID!
+    storeNumber: String!
+    storeName: String!
+    address: Address
+    merchantAccountId: ID!
+    merchantAccount: MerchantAccount @connection(fields: ["merchantAccountId"])
+    status: StoreStatus!
+    statusReason: String
+    statusUpdatedAt: AWSDateTime
+    statusUpdatedBy: String
+    storePhotos: [String]
+  }
+

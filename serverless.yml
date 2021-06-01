@@ -1,0 +1,178 @@
+service: serveless-grapghql-api
+frameworkVersion: '2'
+
+Globals:
+  Function:
+    Environment:
+      Variables:
+        MERCHANTS_DDB_TABLE: MerchantAccount
+
+provider:
+  name: aws
+  runtime: nodejs14.x
+  lambdaHashingVersion: 20201221
+plugins:
+  - serverless-offline
+
+custom:
+  accountId: 446678851215
+  appsync-offline:
+    port: 62222
+    dynamodb:
+      client:
+        endpoint: "http://localhost:8000"
+        region: localhost
+  dynamodb:
+    start:
+      port: 8000
+      inMemory: true
+  appSync:
+    name: appsyncapi-dev # defaults to api
+    authenticationType: AMAZON_COGNITO_USER_POOLS # API_KEY is also supported
+    userPoolConfig:
+      awsRegion: us-east-1 # required # region
+      defaultAction: ALLOW
+      userPoolId: {Ref: CognitoUserPoolUsers}
+    # region: # defaults to provider region
+    # mappingTemplatesLocation: # defaults to mapping-templates
+    mappingTemplates:
+      - dataSource: MerchantAccount
+        type: Query
+        field: getMerchantAccount
+        request: "Query.getMerchantAccount.req.vtl"
+        response: "Query.getMerchantAccount.res.vtl"
+      - dataSource: Lambda
+        type: Mutation
+        field: createMerchantAccount
+        request: "Mutation.createMerchantAccount.req.vtl"
+        response: "Mutation.createMerchantAccount.res.vtl"
+      - dataSource: Lambda
+        type: Mutation
+        field: updateMerchantAccount
+        request: "Mutation.updateMerchantAccount.req.vtl"
+        response: "Mutation.updateMerchantAccount.res.vtl"
+      - dataSource: Lambda
+        type: Mutation
+        field: deleteMerchantAccount
+        request: "Mutation.deleteMerchantAccount.req.vtl"
+        response: "Mutation.deleteMerchantAccount.res.vtl"
+    # schema: # defaults schema.graphql
+    serviceRole: "AppSyncServiceRole"
+    dataSources:
+      - type: AWS_LAMBDA
+        name: Lambda
+        description: 'Lambda DataSource'
+        config:
+          lambdaFunctionArn: "arn:aws:lambda:us-east-1:${self:custom.accountId}:function:${service}-production-graphql"
+          serviceRoleArn: "arn:aws:iam::${self:custom.accountId}:role/Lambda-${self:custom.appSync.serviceRole}"
+      - type: AMAZON_DYNAMODB
+        name: MerchantAccount
+        description: 'MerchantAccount table'
+        config:
+          tableName: 'MerchantAccount'
+          iamRoleStatements: # custom IAM Role statements for this DataSource. Ignored if `serviceRoleArn` is present. Auto-generated if both `serviceRoleArn` and `iamRoleStatements` are omitted
+            - Effect: "Allow"
+              Action:
+                - dynamodb:DescribeTable
+                  - dynamodb:Query
+                  - dynamodb:Scan
+                  - dynamodb:GetItem
+                  - dynamodb:PutItem
+                  - dynamodb:UpdateItem
+                  - dynamodb:DeleteItem
+              Resource:
+                - "arn:aws:dynamodb:${self:provider.region}:*:table/MerchantAccount"
+                - "arn:aws:dynamodb:${self:provider.region}:*:table/MerchantAccount/*"
+      - type: AMAZON_DYNAMODB
+        name: MerchantAccount
+        description: 'MerchantAccount table'
+        config:
+          tableName: 'MerchantAccount'
+          iamRoleStatements: # custom IAM Role statements for this DataSource. Ignored if `serviceRoleArn` is present. Auto-generated if both `serviceRoleArn` and `iamRoleStatements` are omitted
+            - Effect: "Allow"
+              Action:
+                - "dynamodb:Query"
+                - "dynamodb:UpdateItem"
+                - "dynamodb:PutItem"
+                - "dynamodb:DeleteItem"
+              Resource:
+                - "arn:aws:dynamodb:${self:provider.region}:*:table/MerchantAccount"
+                - "arn:aws:dynamodb:${self:provider.region}:*:table/MerchantAccount/*"
+
+functions:
+  graphql:
+    handler: handler.graphqlHandler
+   
+resources:
+  Resources:
+    CognitoUserPoolUsers:
+      Type: AWS::Cognito::UserPool
+      DeletionPolicy: Retain
+      Properties:
+        UserPoolName: MyUserPool
+        AutoVerifiedAttributes:
+          - email
+        Policies:
+          PasswordPolicy:
+            MinimumLength: 8
+            RequireLowercase: true
+            RequireNumbers: true
+            RequireSymbols: false
+            RequireUppercase: true
+        UsernameAttributes:
+          - email
+
+    WebUserPoolClient:
+      Type: AWS::Cognito::UserPoolClient
+      Properties:
+          ClientName: "Web"
+          GenerateSecret: false
+          RefreshTokenValidity: 30
+          UserPoolId: {Ref: CognitoUserPoolUsers}
+
+    MerchantAccount:
+      Type: "AWS::DynamoDB::Table"
+      Properties:
+        KeySchema:
+          -
+            AttributeName: id
+            KeyType: HASH
+        AttributeDefinitions:
+          -
+            AttributeName: id
+            AttributeType: S
+        ProvisionedThroughput:
+          ReadCapacityUnits: 10
+          WriteCapacityUnits: 10
+        TableName: "MerchantAccount"
+
+    AppSyncLambdaServiceRole:
+      Type: "AWS::IAM::Role"
+      Properties:
+        RoleName: "Lambda-AppSyncServiceRole"
+        AssumeRolePolicyDocument:
+          Version: "2012-10-17"
+          Statement:
+            -
+              Effect: "Allow"
+              Principal:
+                Service:
+                  - "appsync.amazonaws.com"
+              Action:
+                - "sts:AssumeRole"
+        Policies:
+          -
+            PolicyName: "Lambda-AppSyncServiceRole-Policy"
+            PolicyDocument:
+              Version: "2012-10-17"
+              Statement:
+                -
+                  Effect: "Allow"
+                  Action:
+                    - "lambda:invokeFunction"
+                  Resource:
+                    - "arn:aws:lambda:us-east-1:${self:custom.accountId}:function:${service}-production-graphql"
+                    - "arn:aws:lambda:us-east-1:${self:custom.accountId}:function:${service}-production-graphql:*"
+
+
+    

@@ -1,0 +1,419 @@
+{
+  "service": {
+    "service": "servelessapi",
+    "serviceObject": {
+      "name": "servelessapi"
+    },
+    "provider": {
+      "name": "aws",
+      "runtime": "nodejs14.x",
+      "lambdaHashingVersion": "20201221",
+      "stage": "dev",
+      "variableSyntax": "\\${([^{}:]+?(?:\\(|:)(?:[^:{}][^{}]*?)?)}",
+      "region": "us-east-1",
+      "versionFunctions": true,
+      "compiledCloudFormationTemplate": {
+        "AWSTemplateFormatVersion": "2010-09-09",
+        "Description": "The AWS CloudFormation template for this Serverless application",
+        "Resources": {
+          "ServerlessDeploymentBucket": {
+            "Type": "AWS::S3::Bucket",
+            "Properties": {
+              "BucketEncryption": {
+                "ServerSideEncryptionConfiguration": [
+                  {
+                    "ServerSideEncryptionByDefault": {
+                      "SSEAlgorithm": "AES256"
+                    }
+                  }
+                ]
+              }
+            }
+          },
+          "ServerlessDeploymentBucketPolicy": {
+            "Type": "AWS::S3::BucketPolicy",
+            "Properties": {
+              "Bucket": {
+                "Ref": "ServerlessDeploymentBucket"
+              },
+              "PolicyDocument": {
+                "Statement": [
+                  {
+                    "Action": "s3:*",
+                    "Effect": "Deny",
+                    "Principal": "*",
+                    "Resource": [
+                      {
+                        "Fn::Join": [
+                          "",
+                          [
+                            "arn:",
+                            {
+                              "Ref": "AWS::Partition"
+                            },
+                            ":s3:::",
+                            {
+                              "Ref": "ServerlessDeploymentBucket"
+                            },
+                            "/*"
+                          ]
+                        ]
+                      },
+                      {
+                        "Fn::Join": [
+                          "",
+                          [
+                            "arn:",
+                            {
+                              "Ref": "AWS::Partition"
+                            },
+                            ":s3:::",
+                            {
+                              "Ref": "ServerlessDeploymentBucket"
+                            }
+                          ]
+                        ]
+                      }
+                    ],
+                    "Condition": {
+                      "Bool": {
+                        "aws:SecureTransport": false
+                      }
+                    }
+                  }
+                ]
+              }
+            }
+          },
+          "CognitoUserPoolUsers": {
+            "Type": "AWS::Cognito::UserPool",
+            "DeletionPolicy": "Retain",
+            "Properties": {
+              "UserPoolName": "MyUserPool",
+              "AutoVerifiedAttributes": [
+                "email"
+              ],
+              "Policies": {
+                "PasswordPolicy": {
+                  "MinimumLength": 8,
+                  "RequireLowercase": true,
+                  "RequireNumbers": true,
+                  "RequireSymbols": false,
+                  "RequireUppercase": true
+                }
+              },
+              "UsernameAttributes": [
+                "email"
+              ]
+            }
+          },
+          "WebUserPoolClient": {
+            "Type": "AWS::Cognito::UserPoolClient",
+            "Properties": {
+              "ClientName": "Web",
+              "GenerateSecret": false,
+              "RefreshTokenValidity": 30,
+              "UserPoolId": {
+                "Ref": "CognitoUserPoolUsers"
+              }
+            }
+          },
+          "MerchantAccount": {
+            "Type": "AWS::DynamoDB::Table",
+            "Properties": {
+              "KeySchema": [
+                {
+                  "AttributeName": "id",
+                  "KeyType": "HASH"
+                }
+              ],
+              "AttributeDefinitions": [
+                {
+                  "AttributeName": "id",
+                  "AttributeType": "S"
+                }
+              ],
+              "ProvisionedThroughput": {
+                "ReadCapacityUnits": 10,
+                "WriteCapacityUnits": 10
+              },
+              "TableName": "MerchantAccount"
+            }
+          }
+        },
+        "Outputs": {
+          "ServerlessDeploymentBucketName": {
+            "Value": {
+              "Ref": "ServerlessDeploymentBucket"
+            },
+            "Export": {
+              "Name": "sls-servelessapi-dev-ServerlessDeploymentBucketName"
+            }
+          }
+        }
+      },
+      "coreCloudFormationTemplate": {
+        "AWSTemplateFormatVersion": "2010-09-09",
+        "Description": "The AWS CloudFormation template for this Serverless application",
+        "Resources": {
+          "ServerlessDeploymentBucket": {
+            "Type": "AWS::S3::Bucket",
+            "Properties": {
+              "BucketEncryption": {
+                "ServerSideEncryptionConfiguration": [
+                  {
+                    "ServerSideEncryptionByDefault": {
+                      "SSEAlgorithm": "AES256"
+                    }
+                  }
+                ]
+              }
+            }
+          },
+          "ServerlessDeploymentBucketPolicy": {
+            "Type": "AWS::S3::BucketPolicy",
+            "Properties": {
+              "Bucket": {
+                "Ref": "ServerlessDeploymentBucket"
+              },
+              "PolicyDocument": {
+                "Statement": [
+                  {
+                    "Action": "s3:*",
+                    "Effect": "Deny",
+                    "Principal": "*",
+                    "Resource": [
+                      {
+                        "Fn::Join": [
+                          "",
+                          [
+                            "arn:",
+                            {
+                              "Ref": "AWS::Partition"
+                            },
+                            ":s3:::",
+                            {
+                              "Ref": "ServerlessDeploymentBucket"
+                            },
+                            "/*"
+                          ]
+                        ]
+                      },
+                      {
+                        "Fn::Join": [
+                          "",
+                          [
+                            "arn:",
+                            {
+                              "Ref": "AWS::Partition"
+                            },
+                            ":s3:::",
+                            {
+                              "Ref": "ServerlessDeploymentBucket"
+                            }
+                          ]
+                        ]
+                      }
+                    ],
+                    "Condition": {
+                      "Bool": {
+                        "aws:SecureTransport": false
+                      }
+                    }
+                  }
+                ]
+              }
+            }
+          }
+        },
+        "Outputs": {
+          "ServerlessDeploymentBucketName": {
+            "Value": {
+              "Ref": "ServerlessDeploymentBucket"
+            }
+          }
+        }
+      }
+    },
+    "custom": {
+      "appsync-offline": {
+        "port": 62222,
+        "dynamodb": {
+          "client": {
+            "endpoint": "http://localhost:8000",
+            "region": "localhost"
+          }
+        }
+      },
+      "dynamodb": {
+        "start": {
+          "port": 8000,
+          "inMemory": true
+        }
+      },
+      "appSync": {
+        "name": "appsyncapi-dev",
+        "authenticationType": "AMAZON_COGNITO_USER_POOLS",
+        "userPoolConfig": {
+          "awsRegion": "us-east-1",
+          "defaultAction": "ALLOW",
+          "userPoolId": {
+            "Ref": "CognitoUserPoolUsers"
+          }
+        },
+        "mappingTemplates": [
+          {
+            "dataSource": "MerchantAccount",
+            "type": "Query",
+            "field": "getMerchantAccount",
+            "request": "Query.getMerchantAccount.req.vtl",
+            "response": "Query.getMerchantAccount.res.vtl"
+          },
+          {
+            "dataSource": "MerchantAccount",
+            "type": "Mutation",
+            "field": "createMerchantAccount",
+            "request": "Mutation.createMerchantAccount.req.vtl",
+            "response": "Mutation.createMerchantAccount.res.vtl"
+          }
+        ],
+        "dataSources": [
+          {
+            "type": "AMAZON_DYNAMODB",
+            "name": "MerchantAccount",
+            "description": "MerchantAccount table",
+            "config": {
+              "tableName": "MerchantAccount",
+              "iamRoleStatements": [
+                {
+                  "Effect": "Allow",
+                  "Action": [
+                    "dynamodb:DescribeTable - dynamodb:Query - dynamodb:Scan - dynamodb:GetItem - dynamodb:PutItem - dynamodb:UpdateItem - dynamodb:DeleteItem"
+                  ],
+                  "Resource": [
+                    "arn:aws:dynamodb:us-east-1:*:table/MerchantAccount",
+                    "arn:aws:dynamodb:us-east-1:*:table/MerchantAccount/*"
+                  ]
+                }
+              ]
+            }
+          },
+          {
+            "type": "AMAZON_DYNAMODB",
+            "name": "MerchantAccount",
+            "description": "MerchantAccount table",
+            "config": {
+              "tableName": "MerchantAccount",
+              "iamRoleStatements": [
+                {
+                  "Effect": "Allow",
+                  "Action": [
+                    "dynamodb:Query",
+                    "dynamodb:UpdateItem",
+                    "dynamodb:PutItem",
+                    "dynamodb:DeleteItem"
+                  ],
+                  "Resource": [
+                    "arn:aws:dynamodb:us-east-1:*:table/MerchantAccount",
+                    "arn:aws:dynamodb:us-east-1:*:table/MerchantAccount/*"
+                  ]
+                }
+              ]
+            }
+          }
+        ]
+      }
+    },
+    "plugins": [
+      "serverless-offline"
+    ],
+    "pluginsData": {},
+    "functions": {},
+    "resources": {
+      "Resources": {
+        "CognitoUserPoolUsers": {
+          "Type": "AWS::Cognito::UserPool",
+          "DeletionPolicy": "Retain",
+          "Properties": {
+            "UserPoolName": "MyUserPool",
+            "AutoVerifiedAttributes": [
+              "email"
+            ],
+            "Policies": {
+              "PasswordPolicy": {
+                "MinimumLength": 8,
+                "RequireLowercase": true,
+                "RequireNumbers": true,
+                "RequireSymbols": false,
+                "RequireUppercase": true
+              }
+            },
+            "UsernameAttributes": [
+              "email"
+            ]
+          }
+        },
+        "WebUserPoolClient": {
+          "Type": "AWS::Cognito::UserPoolClient",
+          "Properties": {
+            "ClientName": "Web",
+            "GenerateSecret": false,
+            "RefreshTokenValidity": 30,
+            "UserPoolId": {
+              "Ref": "CognitoUserPoolUsers"
+            }
+          }
+        },
+        "MerchantAccount": {
+          "Type": "AWS::DynamoDB::Table",
+          "Properties": {
+            "KeySchema": [
+              {
+                "AttributeName": "id",
+                "KeyType": "HASH"
+              }
+            ],
+            "AttributeDefinitions": [
+              {
+                "AttributeName": "id",
+                "AttributeType": "S"
+              }
+            ],
+            "ProvisionedThroughput": {
+              "ReadCapacityUnits": 10,
+              "WriteCapacityUnits": 10
+            },
+            "TableName": "MerchantAccount"
+          }
+        }
+      },
+      "Outputs": {}
+    },
+    "configValidationMode": "warn",
+    "serviceFilename": "serverless.yml",
+    "layers": {},
+    "initialServerlessConfig": {
+      "service": {
+        "$ref": "$[\"service\"][\"serviceObject\"]"
+      },
+      "frameworkVersion": "2",
+      "provider": {
+        "$ref": "$[\"service\"][\"provider\"]"
+      },
+      "plugins": {
+        "$ref": "$[\"service\"][\"plugins\"]"
+      },
+      "custom": {
+        "$ref": "$[\"service\"][\"custom\"]"
+      },
+      "resources": {
+        "$ref": "$[\"service\"][\"resources\"]"
+      }
+    },
+    "isDashboardMonitoringPreconfigured": false
+  },
+  "package": {
+    "artifactDirectoryName": "serverless/servelessapi/dev/1622479279307-2021-05-31T16:41:19.307Z",
+    "artifact": ""
+  }
+}
